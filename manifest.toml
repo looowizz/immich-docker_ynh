@@ -58,8 +58,6 @@ ram.runtime = "500M"
     api.show_tile = false
     api.protected = true
 
-    [resources.apt]
-
     [resources.apt.extras.docker]
     repo = "deb [arch=$(dpkg --print-architecture)] https://download.docker.com/linux/debian __YNH_DEBIAN_VERSION__ stable"
     key = "https://download.docker.com/linux/debian/gpg"

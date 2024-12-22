@@ -4,13 +4,6 @@ source _common.sh
 source /usr/share/yunohost/helpers
 
 #=================================================
-# DOWNLOAD, CHECK AND UNPACK SOURCE
-#=================================================
-ynh_script_progression "Setting up source files..."
-
-ynh_setup_source --source_id="main" --dest_dir="$install_dir/"
-
-#=================================================
 # ADD A CONFIGURATION
 #=================================================
 ynh_script_progression "Adding $app's configuration..."

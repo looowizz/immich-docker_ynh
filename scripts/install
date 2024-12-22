@@ -8,49 +8,17 @@ source /usr/share/yunohost/helpers
 #=================================================
 ynh_script_progression "Setting up source files..."
 
-source_dir="$install_dir/source"
-ynh_setup_source --source_id="main" --dest_dir="$source_dir"
-
-ffmpeg_static_dir="$install_dir/ffmpeg-static"
-ynh_setup_source --source_id="ffmpeg-static" --dest_dir="$ffmpeg_static_dir"
-
-#=================================================
-# INSTALL NODEJS
-#=================================================
-ynh_script_progression "Installing nodejs..."
-
-nodejs_version=$(app_node_version)
-ynh_nodejs_install
-
-#=================================================
-# CREATE A POSTGRESQL DATABASE
-#=================================================
-ynh_script_progression "Creating a PostgreSQL database..."
-
-db_pwd=$(ynh_string_random)
-myynh_update_psql_db
-myynh_create_psql_db
-db_port=$(myynh_execute_psql_as_root --sql="\conninfo" | awk -F '"' '{ print $(NF-1) }')
-ynh_app_setting_set --key=psql_pwd --value="$db_pwd"
-ynh_app_setting_set --key=psql_version --value="$(app_psql_version)"
-ynh_app_setting_set --key=psql_port --value="$(app_psql_port)"
-
-myynh_set_default_psql_cluster_to_debian_default
-
-#=================================================
-# MAKE INSTALL
-#=================================================
-ynh_script_progression "Making install..."
-
-myynh_install_immich
+ynh_setup_source --source_id="main" --dest_dir="$install_dir/"
 
 #=================================================
 # ADD A CONFIGURATION
 #=================================================
 ynh_script_progression "Adding $app's configuration..."
 
-ynh_config_add --template="env" --destination="$install_dir/env"
-ynh_config_add --template="build-lock.json" --destination="$install_dir/app/build-lock.json"
+mkdir "$install_dir/db" # Used for database path in env file
+ynh_config_add --template="env" --destination="$install_dir/.env"
+ynh_config_add --template="docker-compose.yml" --destination="$install_dir/docker-compose.yml"
+
 
 #=================================================
 # SYSTEM CONFIGURATION
@@ -59,8 +27,9 @@ ynh_script_progression "Adding system configurations related to $app..."
 
 ynh_config_add_nginx
 
-ynh_config_add_systemd --service="$app-server" --template="$app-server.service"
-ynh_config_add_systemd --service="$app-machine-learning" --template="$app-machine-learning.service"
+ynh_config_add_systemd --service="$app-server" --template="$app.service"
+ynh_config_add_systemd --service="$app-machine-learning" --template="$app.service"
+# machine learning service is the same as the server service but is just there for saving/reading logs (might be a better way of doing this)
 
 yunohost service add "$app-server" --description="Immich Server" --log="/var/log/$app/$app-server.log"
 yunohost service add "$app-machine-learning" --description="Immich Machine Learning" --log="/var/log/$app/$app-machine-learning.log"
@@ -70,20 +39,15 @@ ynh_multimedia_addaccess "$app"
 
 ynh_config_add_logrotate
 
-ynh_config_add_fail2ban --logpath="/var/log/$app/$app-server.log" --failregex="$failregex"
-
-#=================================================
-# SET FILE OWNERSHIP / PERMISSIONS
-#=================================================
-myynh_set_permissions
+ynh_config_add_fail2ban --logpath="/var/log/$app/$app-server.log" --failregex="$app-server.*Failed login attempt for user.+from ip address\s?<ADDR>"
 
 #=================================================
 # START SYSTEMD SERVICE
 #=================================================
 ynh_script_progression "Starting $app's systemd service..."
 
-ynh_systemctl --service="$app-machine-learning" --action="start" --wait_until="Application startup complete" --log_path="/var/log/$app/$app-machine-learning.log"
-ynh_systemctl --service="$app-server" --action="start" --wait_until="Immich Server is listening" --log_path="/var/log/$app/$app-server.log" --timeout=900
+ynh_systemctl --service="$app-server" --action="start" --wait_until="Immich Server is listening" --log_path="/var/log/$app/$app.log" --timeout=900
+ynh_systemctl --service="$app-machine-learning" --action="start" --log_path="/var/log/$app/$app.log"
 
 #=================================================
 # END OF SCRIPT

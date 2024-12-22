@@ -6,6 +6,12 @@ source /usr/share/yunohost/helpers
 ynh_print_info "Declaring files to be backed up..."
 
 #=================================================
+# BACKUP THE POSTGRESQL DATABASE
+#=================================================
+
+myynh_backup_db
+
+#=================================================
 # BACKUP THE APP MAIN DIR
 #=================================================
 
@@ -35,14 +41,6 @@ ynh_backup "/etc/fail2ban/filter.d/$app.conf"
 # BACKUP VARIOUS FILES
 #=================================================
 ynh_backup "/var/log/$app/"
-
-#=================================================
-# BACKUP THE POSTGRESQL DATABASE
-#=================================================
-ynh_print_info "Backing up a PostgreSQL database..."
-
-myynh_update_psql_db
-myynh_dump_psql_db
 
 #=================================================
 # END OF SCRIPT

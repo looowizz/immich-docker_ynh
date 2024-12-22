@@ -18,24 +18,11 @@ ynh_script_progression "Restoring the data directory..."
 ynh_restore "$data_dir"
 
 #=================================================
-# INSTALL NODEJS
-#=================================================
-ynh_script_progression "Reinstalling nodejs..."
-
-nodejs_version=$(app_node_version)
-ynh_nodejs_install
-
-#=================================================
 # RESTORE THE DATABASE
 #=================================================
 ynh_script_progression "Restoring the database..."
 
-db_pwd=$(ynh_app_setting_get --key=psql_pwd)
-myynh_update_psql_db
-myynh_create_psql_db
-myynh_restore_psql_db
-
-myynh_set_default_psql_cluster_to_debian_default
+myynh_restore_db
 
 #=================================================
 # RESTORE SYSTEM CONFIGURATIONS
@@ -47,8 +34,9 @@ ynh_restore "/etc/nginx/conf.d/$domain.d/$app.conf"
 ynh_restore "/etc/systemd/system/$app-server.service"
 ynh_restore "/etc/systemd/system/$app-machine-learning.service"
 
-systemctl enable "$app-server.service" --quiet
-systemctl enable "$app-machine-learning.service" --quiet
+ynh_config_add_systemd --service="$app-server" --template="$app.service"
+ynh_config_add_systemd --service="$app-machine-learning" --template="$app.service"
+# machine learning service is the same as the server service but is just there for saving/reading logs (might be a better way of doing this)
 
 yunohost service add "$app-server" --description="Immich Server" --log="/var/log/$app/$app-server.log"
 yunohost service add "$app-machine-learning" --description="Immich Machine Learning" --log="/var/log/$app/$app-machine-learning.log"
@@ -63,24 +51,24 @@ ynh_restore "/etc/fail2ban/filter.d/$app.conf"
 ynh_systemctl --service="fail2ban" --action="restart"
 
 #=================================================
+# RESTORE THE DATABASE
+#=================================================
+
+myynh_restore_db
+
+#=================================================
 # RESTORE VARIOUS FILES
 #=================================================
 
 ynh_restore "/var/log/$app/"
 
 #=================================================
-# SET FILE OWNERSHIP / PERMISSIONS
-#=================================================
-
-myynh_set_permissions
-
-#=================================================
 # RELOAD NGINX AND PHP-FPM OR THE APP SERVICE
 #=================================================
 ynh_script_progression "Reloading NGINX web server and $app's service..."
 
-ynh_systemctl --service="$app-machine-learning" --action="start" --wait_until="Application startup complete" --log_path="/var/log/$app/$app-machine-learning.log"
-ynh_systemctl --service="$app-server" --action="start" --wait_until="Immich Server is listening" --log_path="/var/log/$app/$app-server.log" --timeout=900
+ynh_systemctl --service="$app-server" --action="start" --wait_until="Immich Server is listening" --log_path="/var/log/$app/$app.log" --timeout=900
+ynh_systemctl --service="$app-machine-learning" --action="start" --log_path="/var/log/$app/$app.log"
 
 ynh_systemctl --service="nginx" --action="reload"
 

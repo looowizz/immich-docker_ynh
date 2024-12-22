@@ -36,46 +36,13 @@ ynh_script_progression "Upgrading source files..."
 
 ynh_safe_rm "$install_dir"
 
-source_dir="$install_dir/source"
-ynh_setup_source --source_id="main" --dest_dir="$source_dir" --full_replace
-
-ffmpeg_static_dir="$install_dir/ffmpeg-static"
-ynh_setup_source --source_id="ffmpeg-static" --dest_dir="$ffmpeg_static_dir" --full_replace
-
-#=================================================
-# INSTALL NODEJS
-#=================================================
-ynh_script_progression "Installing nodejs..."
-
-nodejs_version=$(app_node_version)
-ynh_nodejs_install
-
-#=================================================
-# UPDATE A POSTGRESQL DATABASE
-#=================================================
-ynh_script_progression "Udpating a PostgreSQL database..."
-
-myynh_update_psql_db
-
-myynh_set_default_psql_cluster_to_debian_default
-
-#=================================================
-# MAKE INSTALL
-#=================================================
-ynh_script_progression "Making install..."
-
-myynh_install_immich
-
 #=================================================
 # UPDATE A CONFIG FILE
 #=================================================
 ynh_script_progression "Updating $app's configuration files..."
 
-db_pwd=$(ynh_app_setting_get --key=psql_pwd)
-db_port=$(ynh_app_setting_get --key=psql_port)
-
-ynh_config_add --template="env" --destination="$install_dir/env"
-ynh_config_add --template="build-lock.json" --destination="$install_dir/app/build-lock.json"
+ynh_config_add --template="env" --destination="$install_dir/.env"
+ynh_config_add --template="docker-compose.yml" --destination="$install_dir/docker-compose.yml"
 
 #=================================================
 # REAPPLY SYSTEM CONFIGURATIONS
@@ -84,32 +51,33 @@ ynh_script_progression "Upgrading system configurations related to $app..."
 
 ynh_config_add_nginx
 
-ynh_config_add_systemd --service="$app-server" --template="$app-server.service"
-ynh_config_add_systemd --service="$app-machine-learning" --template="$app-machine-learning.service"
+ynh_config_add_systemd --service="$app" --template="$app.service"
+ynh_config_add_systemd --service="$app-machine-learning" --template="$app.service"
 
-yunohost service add "$app-machine-learning" --description="Immich Machine Learning" --log="/var/log/$app/$app-machine-learning.log"
 yunohost service add "$app-server" --description="Immich Server" --log="/var/log/$app/$app-server.log"
+yunohost service add "$app-machine-learning" --description="Immich Machine Learning" --log="/var/log/$app/$app-machine-learning.log"
 
 ynh_multimedia_build_main_dir
 ynh_multimedia_addaccess "$app"
 
 ynh_config_add_logrotate
 
-ynh_config_add_fail2ban --logpath="/var/log/$app/$app-server.log" --failregex="$failregex"
+ynh_config_add_fail2ban --logpath="/var/log/$app/$app-server.log" --failregex="$app-server.*Failed login attempt for user.+from ip address\s?<ADDR>"
 
 #=================================================
-# SET FILE OWNERSHIP / PERMISSIONS
+# UPDATE IMMICH FROM DOCKER
 #=================================================
+ynh_script_progression "Updating $app from Docker..."
 
-myynh_set_permissions
+myynh_docker_pull
 
 #=================================================
 # START SYSTEMD SERVICE
 #=================================================
 ynh_script_progression "Starting $app's systemd service..."
 
-ynh_systemctl --service="$app-machine-learning" --action="start" --wait_until="Application startup complete" --log_path="/var/log/$app/$app-machine-learning.log"
-ynh_systemctl --service="$app-server" --action="start" --wait_until="Immich Server is listening" --log_path="/var/log/$app/$app-server.log" --timeout=900
+ynh_systemctl --service="$app" --action="start" --wait_until="Immich Server is listening" --log_path="/var/log/$app/$app.log" --timeout=900
+ynh_systemctl --service="$app-machine-learning" --action="start" --log_path="/var/log/$app/$app.log"
 
 #=================================================
 # END OF SCRIPT

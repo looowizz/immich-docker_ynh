@@ -19,9 +19,6 @@ app_node_version() {
 	| cut -d'.' -f1
 }
 
-# Fail2ban
-failregex="$app-server.*Failed login attempt for user.+from ip address\s?<ADDR>"
-
 # PostgreSQL required version
 app_psql_version() {
 	ynh_read_manifest "resources.apt.extras.postgresql.packages" \
@@ -275,4 +272,31 @@ myynh_set_default_psql_cluster_to_debian_default() {
 
 	# Add new line USER  GROUP   VERSION CLUSTER DATABASE
 	echo -e "* * $default_psql_version $default_psql_cluster $default_psql_database" >> "$config_file"
+}
+
+myynh_docker_pull() {
+	cd $install_dir
+	docker compose pull && docker compose up -d
+}
+
+myynh_backup_db() {
+	cd $install_dir
+	mkdir "$install_dir/db_backup"
+	docker exec -t immich_postgres pg_dumpall --clean --if-exists --username=postgres | gzip > "$install_dir/db_backup"
+}
+
+myynh_restore_db() {
+	cd $install_dir
+	docker compose down -v  # CAUTION! Deletes all Immich data to start from scratch
+	## Uncomment the next line and replace DB_DATA_LOCATION with your Postgres path to permanently reset the Postgres database
+	rm -rf $install_dir/db # CAUTION! Deletes all Immich data to start from scratch
+	docker compose pull             # Update to latest version of Immich (if desired)
+	docker compose create           # Create Docker containers for Immich apps without running them
+	docker start immich_postgres    # Start Postgres server
+	sleep 10                        # Wait for Postgres server to start up
+	# Check the database user if you deviated from the default
+	gunzip < "$install_dir/db_backup/dump.sql.gz" \
+	| sed "s/SELECT pg_catalog.set_config('search_path', '', false);/SELECT pg_catalog.set_config('search_path', 'public, pg_catalog', true);/g" \
+	| docker exec -i immich_postgres psql --username=postgres  # Restore Backup
+	ynh_secure_remove --file="$install_dir/db_backup"
 }

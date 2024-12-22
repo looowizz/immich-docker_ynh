@@ -41,8 +41,6 @@ ram.runtime = "500M"
 
 [resources]
 
-    [resources.sources]
-
     [resources.ports]
     main.default = 2283
     machinelearning.default = 3003
@@ -61,7 +59,7 @@ ram.runtime = "500M"
     api.protected = true
 
     [resources.apt.extras.docker]
-    repo = "deb __YNH_ARCH__ https://download.docker.com/linux/debian __YNH_DEBIAN_VERSION__ stable"
+    repo = "deb [arch=__YNH_ARCH__] https://download.docker.com/linux/debian __YNH_DEBIAN_VERSION__ stable"
     key = "https://download.docker.com/linux/debian/gpg"
     packages = [
         "docker-ce",

@@ -8,7 +8,6 @@ source /usr/share/yunohost/helpers
 #=================================================
 ynh_script_progression "Adding $app's configuration..."
 
-DB_PASSWORD=$(ynh_string_random)
 ynh_config_add --template="env" --destination="$install_dir/.env"
 ynh_config_add --template="docker-compose.yml" --destination="$install_dir/docker-compose.yml"
 

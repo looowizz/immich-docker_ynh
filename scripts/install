@@ -27,7 +27,7 @@ yunohost service add "$app-server" --description="Immich Server"
 ynh_multimedia_build_main_dir
 ynh_multimedia_addaccess "$app"
 
-ynh_config_add_fail2ban --logpath="/var/log/nginx/access.log" --failregex="^.*\"(POST).*\" (401) .*($domain_regex).*$"
+ynh_config_add_fail2ban --logpath="/var/log/nginx/access.log" --failregex=$failregex
 
 #=================================================
 # START SYSTEMD SERVICE

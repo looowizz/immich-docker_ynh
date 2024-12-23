@@ -275,6 +275,7 @@ myynh_set_default_psql_cluster_to_debian_default() {
 }
 
 domain_regex=${domain//[.]/\\.} # Replace "." with "\." for use in regex in fail2ban config
+failregex="^.*\"(POST).*\" (401) .*($domain_regex).*<HOST>.*$"
 
 myynh_docker_pull() {
 	cd $install_dir

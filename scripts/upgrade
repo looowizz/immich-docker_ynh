@@ -52,17 +52,13 @@ ynh_script_progression "Upgrading system configurations related to $app..."
 ynh_config_add_nginx
 
 ynh_config_add_systemd --service="$app" --template="$app.service"
-ynh_config_add_systemd --service="$app-machine-learning" --template="$app.service"
 
-yunohost service add "$app-server" --description="Immich Server" --log="/var/log/$app/$app-server.log"
-yunohost service add "$app-machine-learning" --description="Immich Machine Learning" --log="/var/log/$app/$app-machine-learning.log"
+yunohost service add "$app-server" --description="Immich Server"
 
 ynh_multimedia_build_main_dir
 ynh_multimedia_addaccess "$app"
 
-ynh_config_add_logrotate
-
-ynh_config_add_fail2ban --logpath="/var/log/$app/$app-server.log" --failregex="$app-server.*Failed login attempt for user.+from ip address\s?<ADDR>"
+ynh_config_add_fail2ban --logpath="/var/log/nginx/access.log" --failregex="^.*"(POST).*" (401) .*($domain_regex).*$"
 
 #=================================================
 # UPDATE IMMICH FROM DOCKER
@@ -76,8 +72,7 @@ myynh_docker_pull
 #=================================================
 ynh_script_progression "Starting $app's systemd service..."
 
-ynh_systemctl --service="$app" --action="start" --wait_until="Immich Server is listening" --log_path="/var/log/$app/$app.log" --timeout=900
-ynh_systemctl --service="$app-machine-learning" --action="start" --log_path="/var/log/$app/$app.log"
+ynh_systemctl --service="$app" --action="start" --wait_until="Immich Server is listening" --log_path="systemd" --timeout=900
 
 #=================================================
 # END OF SCRIPT

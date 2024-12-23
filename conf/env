@@ -6,6 +6,9 @@ IMMICH_VERSION=release
 
 ## Database
 DB_DATA_LOCATION= __INSTALL_DIR__/db
+DB_PASSWORD=__DB_PASSWORD__
+DB_USERNAME=postgres
+DB_DATABASE_NAME=immich
 
 ## Ports
 IMMICH_PORT=__PORT__

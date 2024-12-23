@@ -274,6 +274,8 @@ myynh_set_default_psql_cluster_to_debian_default() {
 	echo -e "* * $default_psql_version $default_psql_cluster $default_psql_database" >> "$config_file"
 }
 
+domain_regex=${domain//[.]/\\.} # Replace "." with "\." for use in regex in fail2ban config
+
 myynh_docker_pull() {
 	cd $install_dir
 	docker compose pull && docker compose up -d

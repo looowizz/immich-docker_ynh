@@ -7,7 +7,7 @@ After=docker.service
 Restart=always
 User=root
 Group=docker
-WorkingDirectory=__DATA_DIR__/
+WorkingDirectory=__INSTALL_DIR__/
 ExecStart=/bin/bash -c "docker compose -f __INSTALL_DIR__/docker-compose.yml up --detach"
 ExecStop=/bin/bash -c "docker compose -f __INSTALL_DIR__/docker-compose.yml stop"
 

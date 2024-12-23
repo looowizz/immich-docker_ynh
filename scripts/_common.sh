@@ -279,7 +279,12 @@ failregex="^.*\"(POST).*\" (401) .*($domain_regex).*<HOST>.*$"
 
 myynh_docker_pull() {
 	cd $install_dir
-	docker compose pull && docker compose up -d
+	docker compose pull
+}
+
+myynh_docker_up() {
+	cd $install_dir
+	docker compose up -d
 }
 
 myynh_backup_db() {

@@ -18,6 +18,14 @@ ynh_script_progression "Updating NGINX web server configuration..."
 ynh_config_change_url_nginx
 
 #=================================================
+# MODIFY URL IN FAIL2BAN CONF
+#=================================================
+
+ynh_config_remove_fail2ban
+domain_regex=${domain//[.]/\\.}
+ynh_config_add_fail2ban --logpath="/var/log/nginx/access.log" --failregex="^.*"(POST).*" (401) .*($domain_regex).*$"
+
+#=================================================
 # START SYSTEMD SERVICE
 #=================================================
 ynh_script_progression "Starting $app's systemd service..."

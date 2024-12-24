@@ -31,12 +31,12 @@ ynh_script_progression "Restoring system configurations related to $app..."
 
 ynh_restore "/etc/nginx/conf.d/$domain.d/$app.conf"
 
-ynh_restore "/etc/systemd/system/$app-server.service"
+ynh_restore "/etc/systemd/system/$app.service"
 
-ynh_config_add_systemd --service="$app-server" --template="$app.service"
+ynh_config_add_systemd --service="$app" --template="$app.service"
 # machine learning service is the same as the server service but is just there for saving/reading logs (might be a better way of doing this)
 
-yunohost service add "$app-server" --description="Immich Server"
+yunohost service add "$app" --description="Immich"
 
 ynh_multimedia_build_main_dir
 ynh_multimedia_addaccess "$app"
@@ -57,7 +57,7 @@ myynh_restore_db
 #=================================================
 ynh_script_progression "Reloading NGINX web server and $app's service..."
 
-ynh_systemctl --service="$app-server" --action="start" --wait_until="Immich Server is listening" --log_path="systemd" --timeout=900
+ynh_systemctl --service="$app" --action="start" --wait_until="Immich Server is listening" --log_path="systemd" --timeout=900
 
 ynh_systemctl --service="nginx" --action="reload"
 

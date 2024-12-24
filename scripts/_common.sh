@@ -11,9 +11,10 @@ myynh_docker_up() {
 	docker compose up -d
 }
 
+# Backs up the database (NOTE: Immich must be running for this to work)
 myynh_backup_db() {
 	cd $install_dir
-	mkdir "$install_dir/db_backup"
+	mkdir "$install_dir/db_backup" -p
 	docker exec -t immich_postgres pg_dumpall --clean --if-exists --username=postgres | gzip > "db_backup/dump.sql.gz"
 }
 
